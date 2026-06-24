@@ -1,0 +1,138 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  DEVELOPER
+  QA
+  PM
+  ADMIN
+  VIEWER
+}
+
+enum BugStatus {
+  OPEN
+  IN_PROGRESS
+  FIXED
+  CLOSED
+  REOPENED
+}
+
+enum Severity {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          Role      @default(DEVELOPER)
+  avatarUrl     String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  reportedBugs  Bug[]     @relation("ReportedBugs")
+  assignedBugs  Bug[]     @relation("AssignedBugs")
+  comments      Comment[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+  attachments   Attachment[]
+
+  @@map("users")
+}
+
+model Bug {
+  id          String     @id @default(uuid())
+  title       String
+  description String
+  status      BugStatus  @default(OPEN)
+  severity    Severity   @default(MEDIUM)
+  module      String?
+  category    String?
+  dueDate     DateTime?
+  resolvedAt  DateTime?
+
+  reporterId  String
+  reporter    User       @relation("ReportedBugs", fields: [reporterId], references: [id])
+
+  assigneeId  String?
+  assignee    User?      @relation("AssignedBugs", fields: [assigneeId], references: [id])
+
+  comments    Comment[]
+  attachments Attachment[]
+  auditLogs   AuditLog[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("bugs")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  bugId     String
+  bug       Bug      @relation(fields: [bugId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("comments")
+}
+
+model Attachment {
+  id           String   @id @default(uuid())
+  fileName     String
+  originalName String
+  fileSize     Int
+  mimeType     String
+  s3Key        String
+  s3Url        String
+  bugId        String
+  bug          Bug      @relation(fields: [bugId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@map("attachments")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  bugId     String
+  bug       Bug      @relation(fields: [bugId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  field     String?
+  oldValue  String?
+  newValue  String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  message   String
+  payload   Json?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
