@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bug, LayoutDashboard, User, Bell, LogOut, ChevronRight, Settings } from 'lucide-react';
+import { Bug, LayoutDashboard, User, Bell, LogOut, ChevronRight, Settings, Menu, X } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -28,11 +29,12 @@ const ROLE_BADGE: Record<string, string> = {
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  return (
-    <aside className="w-60 min-h-screen bg-white border-r border-gray-100 flex flex-col">
+  const NavContent = () => (
+    <>
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-gray-100">
+      <div className="px-5 py-5 border-b border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-orange-500 flex items-center justify-center shadow-sm shadow-orange-200">
             <Bug className="w-4 h-4 text-white" />
@@ -42,9 +44,13 @@ export function Sidebar() {
             <div className="text-xs text-orange-400 font-medium mt-0.5">Bug Tracker</div>
           </div>
         </div>
+        {/* Close button — mobile only */}
+        <button onClick={() => setMobileOpen(false)} className="lg:hidden text-gray-400 hover:text-gray-600">
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
-      {/* Nav */}
+      {/* Nav links */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
@@ -52,6 +58,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setMobileOpen(false)}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all',
                 isActive
@@ -75,6 +82,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => setMobileOpen(false)}
                 className={cn(
                   'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all',
                   pathname.startsWith(item.href)
@@ -111,6 +119,50 @@ export function Sidebar() {
           </button>
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* ── MOBILE TOP BAR ── */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-orange-500 flex items-center justify-center">
+            <Bug className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <div className="text-sm font-bold text-gray-900 leading-none">VedaAI</div>
+            <div className="text-xs text-orange-400 font-medium">Bug Tracker</div>
+          </div>
+        </div>
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 hover:bg-orange-50 hover:text-orange-500 transition-all"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* ── MOBILE OVERLAY ── */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* ── MOBILE DRAWER ── */}
+      <div className={cn(
+        'lg:hidden fixed top-0 left-0 h-full w-72 bg-white z-50 flex flex-col shadow-xl transition-transform duration-300',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+      )}>
+        <NavContent />
+      </div>
+
+      {/* ── DESKTOP SIDEBAR ── */}
+      <aside className="hidden lg:flex w-60 min-h-screen bg-white border-r border-gray-100 flex-col">
+        <NavContent />
+      </aside>
+    </>
   );
 }

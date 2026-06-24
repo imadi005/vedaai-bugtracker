@@ -9,12 +9,10 @@ import { useSocket } from '@/lib/socket';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, token } = useAuthStore();
   const router = useRouter();
-  useSocket(); // Initialize socket connection
+  useSocket();
 
   useEffect(() => {
-    if (!token && !user) {
-      router.push('/auth/login');
-    }
+    if (!token && !user) router.push('/auth/login');
   }, [token, user]);
 
   if (!user) return null;
@@ -22,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pt-16 lg:pt-0">
         {children}
       </main>
     </div>
